@@ -8,6 +8,8 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 
+import { TRPCReactProvider } from "@/trpc/client";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,20 +34,22 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          <SignedOut>
-            <SignInButton />
-          </SignedOut>
-          <SignedIn>
-            <UserButton />
-          </SignedIn>
+      <TRPCReactProvider>
+        <html lang="en">
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          >
+            <SignedOut>
+              <SignInButton />
+            </SignedOut>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
 
-          {children}
-        </body>
-      </html>
+            {children}
+          </body>
+        </html>
+      </TRPCReactProvider>
     </ClerkProvider>
   );
 }
