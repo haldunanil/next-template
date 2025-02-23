@@ -1,9 +1,26 @@
 import Image from "next/image";
-import { ClientGreeting } from "./ClientGreeting";
+import { auth } from "@clerk/nextjs/server";
+import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
-export default function Home() {
+import { ClientGreeting } from "./ClientGreeting";
+import { redirect } from "next/navigation";
+
+const Home = async () => {
+  const { userId } = await auth();
+
+  if (userId) {
+    return redirect("/dashboard");
+  }
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+      <SignedOut>
+        <SignInButton />
+      </SignedOut>
+      <SignedIn>
+        <UserButton />
+      </SignedIn>
+
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
         <Image
           className="dark:invert"
@@ -101,4 +118,6 @@ export default function Home() {
       </footer>
     </div>
   );
-}
+};
+
+export default Home;

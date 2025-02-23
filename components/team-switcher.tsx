@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { ChevronsUpDown, Plus } from "lucide-react"
+import { ChevronsUpDown, Plus } from "lucide-react";
+import { useClerk, useOrganization, useOrganizationList } from "@clerk/nextjs";
 
 import {
   DropdownMenu,
@@ -11,25 +11,32 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export function TeamSwitcher({
-  teams,
-}: {
-  teams: {
-    name: string
-    logo: React.ElementType
-    plan: string
-  }[]
-}) {
-  const { isMobile } = useSidebar()
-  const [activeTeam, setActiveTeam] = React.useState(teams[0])
+export function TeamSwitcher() {
+  const { isMobile } = useSidebar();
+
+  // Clerk hooks
+  const { user } = useClerk();
+  const {
+    isLoaded,
+    userMemberships: { data: organizations },
+    setActive,
+  } = useOrganizationList({
+    userMemberships: true,
+  });
+  const { organization } = useOrganization();
+
+  if (!isLoaded || !user?.id) {
+    return null;
+  }
 
   return (
     <SidebarMenu>
@@ -40,13 +47,41 @@ export function TeamSwitcher({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                <activeTeam.logo className="size-4" />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{activeTeam.name}</span>
-                <span className="truncate text-xs">{activeTeam.plan}</span>
-              </div>
+              {organization ? (
+                <>
+                  <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                    {/* <activeTeam.logo className="size-4" /> */}
+                    <Avatar className="h-8 w-8 rounded-lg">
+                      <AvatarImage
+                        src={organization.imageUrl}
+                        alt={organization.name}
+                      />
+                      <AvatarFallback className="rounded-lg">
+                        ORG
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-medium">
+                      {organization.name}
+                    </span>
+                    <span className="truncate text-xs">Enterprise</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                    {user.firstName?.[0]}
+                    {user.lastName?.[0]}
+                  </div>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-medium">
+                      {user.fullName}
+                    </span>
+                    <span className="truncate text-xs">Personal account</span>
+                  </div>
+                </>
+              )}
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
@@ -56,23 +91,36 @@ export function TeamSwitcher({
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="text-muted-foreground text-xs">
-              Teams
-            </DropdownMenuLabel>
-            {teams.map((team, index) => (
-              <DropdownMenuItem
-                key={team.name}
-                onClick={() => setActiveTeam(team)}
-                className="gap-2 p-2"
-              >
-                <div className="flex size-6 items-center justify-center rounded-xs border">
-                  <team.logo className="size-4 shrink-0" />
-                </div>
-                {team.name}
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
+            {organizations?.length ? (
+              <>
+                <DropdownMenuLabel className="text-muted-foreground text-xs">
+                  Teams
+                </DropdownMenuLabel>
+                {organizations.map(({ id, organization }, index) => (
+                  <DropdownMenuItem
+                    key={id}
+                    onClick={() => setActive({ organization: organization.id })}
+                    className="gap-2 p-2"
+                  >
+                    <div className="flex size-6 items-center justify-center rounded-xs border">
+                      <Avatar className="h-8 w-8 rounded-lg">
+                        <AvatarImage
+                          src={organization.imageUrl}
+                          alt={organization.name}
+                        />
+                        <AvatarFallback className="rounded-lg">
+                          OA
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                    {organization.name}
+                    <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+              </>
+            ) : null}
+
             <DropdownMenuItem className="gap-2 p-2">
               <div className="bg-background flex size-6 items-center justify-center rounded-md border">
                 <Plus className="size-4" />
@@ -83,5 +131,5 @@ export function TeamSwitcher({
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }
