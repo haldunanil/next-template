@@ -1,3 +1,11 @@
 import { drizzle } from "drizzle-orm/neon-http";
 
-export const db = drizzle(process.env.DATABASE_URL!);
+import * as schema from "./schema";
+
+export const db = drizzle({
+  schema,
+  casing: "snake_case",
+  connection: {
+    connectionString: process.env.DATABASE_URL!,
+  },
+});
